@@ -59,18 +59,6 @@ def main():
             bank_app.select_account(account_number)
         elif command == 4:
             # add transaction
-            # complete = False
-            # while not complete:
-            #     # amount = Decimal(input('Amount?\n'))
-            #     try:
-            #         amount = Decimal(input('Amount?\n'))
-            #     except ValueError:
-            #         print("enter valid amount")
-            #     date_input = input("Date? (YYYY-MM-DD)\n").strip()
-            #     try:
-            #         date = datetime.datetime.strptime(date_input, "%Y-%m-%d").date()
-            #     except ValueError:
-            #         print("enter valid date")
             amount = Decimal(input('Amount?\n'))
             date_input = input("Date? (YYYY-MM-DD)\n").strip()
             date = datetime.datetime.strptime(date_input, "%Y-%m-%d").date()
