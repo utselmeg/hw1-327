@@ -49,7 +49,7 @@ class Account:
 
         self._transactions.append(new_transaction)
         self._update_balance()
-        logger.debug(f"Created transaction: {self.account_number}, {amount}")
+        # logger.debug(f"Created transaction: {self.account_number}, {amount}")
 
     def _update_balance(self) -> None:
         """Updates the account balance based on all transactions."""
@@ -68,6 +68,7 @@ class Account:
             raise TransactionSequenceError(fee_date, error_type="interest")
 
         interest = (self._balance * interest_rate) / Decimal(100)
+        logger.debug(f"Created transaction: {self.account_number}, {interest}")
         if isinstance(self, SavingsAccount) or isinstance(self, CheckingAccount):
             self.add_transaction(interest, fee_date, TransactionType.INTEREST, bypass_limit=True)
         self._apply_account_fees(fee_date)
@@ -122,4 +123,5 @@ class CheckingAccount(Account):
     def _apply_account_fees(self, fee_date: datetime.date) -> None:
         """Applies an overdraft fee if the balance is too low."""
         if self.balance < self.MIN_BALANCE_FOR_FEE:
+            logger.debug(f"Created transaction: {self.account_number}, {self.OVERDRAFT_FEE}")
             self.add_transaction(self.OVERDRAFT_FEE, fee_date, TransactionType.FEE, bypass_limit=True)

@@ -60,6 +60,7 @@ class Bank:
 
     def add_transaction(self, amount: Decimal, date) -> None:
         """Adds a transaction to the selected account."""
+        logger.debug(f"Created transaction: {self._selected.account_number}, {amount}")
         try:
             transaction_type = (TransactionType.WITHDRAWAL if amount < 0 else TransactionType.DEPOSIT)
             self._selected.add_transaction(amount, date, transaction_type)
