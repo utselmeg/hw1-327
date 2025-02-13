@@ -1,5 +1,10 @@
+import logging
 from decimal import Decimal, ROUND_HALF_UP
+from TransactionClass import TransactionType
 from AccountClass import Account, AccountType, SavingsAccount, CheckingAccount
+from CustomException import OverdrawError, TransactionSequenceError
+
+logger = logging.getLogger(__name__)
 
 class Bank:
     """Represents a banking system that manages multiple accounts."""
@@ -15,8 +20,7 @@ class Bank:
         try:
             acc_type_enum = AccountType.from_string(account_type)
         except ValueError as e:
-            print(e)
-            return
+            raise e
 
         if acc_type_enum == AccountType.CHECKING:
             new_account = CheckingAccount(self._num_accounts + 1)
@@ -25,6 +29,7 @@ class Bank:
 
         self._num_accounts += 1
         self._accounts[self._num_accounts] = new_account
+        logger.debug(f"Created account: {self._num_accounts}")
 
     @classmethod
     def format_amount(cls, amount: Decimal) -> str:
@@ -51,18 +56,25 @@ class Bank:
         elif account_number in self._accounts:
             self._selected = self._accounts[account_number]
         else:
-            # print("no account")
-            return
+            raise AttributeError("Invalid account number.")
 
     def add_transaction(self, amount: Decimal, date) -> None:
         """Adds a transaction to the selected account."""
-        if self._selected is None:
-            return
-        self._selected.add_transaction(amount, date)
+        if not self.get_selected_account():
+            raise AttributeError("This command requires that you first select an account.")
+        try:
+            if amount > 0:
+                transaction_type = TransactionType.DEPOSIT
+            else:
+                transaction_type = TransactionType.WITHDRAWAL
+            self._selected.add_transaction(amount, date, transaction_type)
+            logger.debug(f"Created transaction: {self.get_selected_account().account_number}, {amount}")
+        except (OverdrawError, TransactionSequenceError) as e:
+            raise e
 
     def list_transactions(self) -> None:
         """Lists all transactions for the selected account."""
-        if self._selected:
+        if self.get_selected_account():
             transactions = self._selected.list_transactions()
             if transactions:
                 for transaction in transactions:
@@ -71,11 +83,15 @@ class Bank:
                 # print("no transactions")
                 return
         else:
-            # print("no selected")
-            return
+            print("no selected")
+            raise AttributeError("This command requires that you first select an account.")
 
     def interest_and_fees(self) -> None:
         """When invoked, apply interests and fees to the selected account."""
-        if self._selected is None:
-            return
-        self._selected.apply_interest_and_fees()
+        if not self.get_selected_account():
+            raise AttributeError("This command requires that you first select an account.")
+        try:
+            self._selected.apply_interest_and_fees()
+            logger.debug("Triggered interest and fees")
+        except TransactionSequenceError as e:
+            print(e)

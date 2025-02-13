@@ -1,11 +1,15 @@
 import os
 import sys
-import pickle
+import logging
 import datetime
+import pickle
 from decimal import Decimal
 from typing import NoReturn
 from BankClass import Bank
 from AccountClass import Account
+from CustomException import OverdrawError, TransactionSequenceError, TransactionLimitError
+
+logger = logging.getLogger(__name__)
 
 class BankMenu:
     """Display the bank menu."""
@@ -18,7 +22,7 @@ class BankMenu:
 
     def _display_menu(self) -> None:
         selected_account: Account = self.bank.get_selected_account()
-        account_info = (f'{selected_account.get_name()},\tbalance: {self.bank.format_amount(selected_account.get_balance())}'
+        account_info = (f'{selected_account.name},\tbalance: {self.bank.format_amount(selected_account.balance)}'
                         if selected_account else "None")
         print(
 "--------------------------------\n"
@@ -54,8 +58,13 @@ f"Currently selected account: {account_info}\n"
                 self._quit()
 
     def _open_account(self) -> None:
-        account_type = input("Type of account? (checking/savings)\n>").strip().capitalize()
-        self.bank.open_account(account_type)
+        try:
+            account_type = input("Type of account? (checking/savings)\n>").strip().capitalize()
+            self.bank.open_account(account_type)
+        except ValueError as e:
+            print("printing error")
+            print(e)
+            return
 
     def _summary(self) -> None:
         self.bank.summary()
@@ -64,35 +73,58 @@ f"Currently selected account: {account_info}\n"
         try:
             account_number = int(input("Enter account number\n>"))
             self.bank.select_account(account_number)
-        except ValueError:
-            # print("invalid input")
+        except (ValueError, AttributeError) as e:
+            print(e)
             return
 
     def _add_transaction(self) -> None:
         try:
-            amount = Decimal(input("Amount?\n>"))
-            date_input = input("Date? (YYYY-MM-DD)\n>").strip()
-            date = datetime.datetime.strptime(date_input, "%Y-%m-%d").date()
+            while True:
+                try:
+                    amount = Decimal(input("Amount?\n>"))
+                    if Decimal(amount):
+                        amount = Decimal(amount)
+                        break
+                except ValueError:
+                    print("Please try again with a valid dollar amount.")
+            while True:
+                try:
+                    date_input = input("Date? (YYYY-MM-DD)\n>").strip()
+                    date = datetime.datetime.strptime(date_input, "%Y-%m-%d").date()
+                    break
+                except ValueError:
+                    print("Please try again with a valid date in the format YYYY-MM-DD.")
             self.bank.add_transaction(amount, date)
-        except (ValueError, TypeError):
-            # print("invalid input")
+        except (ValueError, TypeError, AttributeError, OverdrawError, TransactionSequenceError, TransactionLimitError) as e:
+            print("printing error")
+            print(e)
             return
 
     def _list_transactions(self) -> None:
-        self.bank.list_transactions()
+        try:
+            self.bank.list_transactions()
+        except (ValueError, TypeError, AttributeError) as e:
+            print(e)
+            return
 
     def _apply_interest_and_fees(self) -> None:
-        self.bank.interest_and_fees()
+        try:
+            self.bank.interest_and_fees()
+        except (ValueError, TypeError, AttributeError) as e:
+            print(e)
+            return
 
     def _save(self) -> None:
         with open("bank.pickle", "wb") as file:
             pickle.dump(self.bank, file)  # type: ignore
+            logger.debug("Saved to bank.pickle")
 
     def _load(self) -> None:
         if os.path.exists("bank.pickle"):
             with open("bank.pickle", "rb") as file:
                 self.bank = pickle.load(file)
                 self.bank.select_account(None)
+                logger.debug("Loaded from bank.pickle")
         else:
             self.bank = Bank()
 
