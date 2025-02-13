@@ -39,11 +39,11 @@ class Bank:
     def summary(self) -> None:
         """Prints a summary of all accounts and their balances."""
         if not self._accounts:
-            # print("no accounts")
+            # print("No accounts in bank.")
             return
 
         for account in self._accounts.values():
-            print(f"{account.get_name()},\tbalance: {self.format_amount(account.get_balance())}")
+            print(f"{account.name},\tbalance: {self.format_amount(account.balance)}")
 
     def get_selected_account(self) -> Account | None:
         """Returns the currently selected account."""
@@ -60,38 +60,32 @@ class Bank:
 
     def add_transaction(self, amount: Decimal, date) -> None:
         """Adds a transaction to the selected account."""
-        if not self.get_selected_account():
-            raise AttributeError("This command requires that you first select an account.")
         try:
-            if amount > 0:
-                transaction_type = TransactionType.DEPOSIT
-            else:
-                transaction_type = TransactionType.WITHDRAWAL
+            transaction_type = (TransactionType.WITHDRAWAL if amount < 0 else TransactionType.DEPOSIT)
             self._selected.add_transaction(amount, date, transaction_type)
-            logger.debug(f"Created transaction: {self.get_selected_account().account_number}, {amount}")
         except (OverdrawError, TransactionSequenceError) as e:
             raise e
 
     def list_transactions(self) -> None:
         """Lists all transactions for the selected account."""
-        if self.get_selected_account():
-            transactions = self._selected.list_transactions()
-            if transactions:
-                for transaction in transactions:
-                    print(f"{transaction.date}, {self.format_amount(transaction.amount)}")
-            else:
-                # print("no transactions")
-                return
-        else:
-            print("no selected")
+        if not self.get_selected_account():
             raise AttributeError("This command requires that you first select an account.")
+
+        transactions = self._selected.list_transactions()
+        if transactions:
+            for transaction in transactions:
+                print(f"{transaction.date}, {self.format_amount(transaction.amount)}")
+        else:
+            # print("No transactions to show on this account.")
+            return
 
     def interest_and_fees(self) -> None:
         """When invoked, apply interests and fees to the selected account."""
         if not self.get_selected_account():
             raise AttributeError("This command requires that you first select an account.")
+
         try:
             self._selected.apply_interest_and_fees()
             logger.debug("Triggered interest and fees")
         except TransactionSequenceError as e:
-            print(e)
+            raise e

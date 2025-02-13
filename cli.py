@@ -9,16 +9,22 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S"
 )
 
-def main():
+def main(bank_menu: BankMenu):
     """Runs the bank menu system."""
-    menu = BankMenu()
-    menu.run()
+    bank_menu.run()
 
 if __name__ == "__main__":
+    menu = BankMenu()
     try:
-        main()
+        main(menu)
     except Exception as e:
         error_message = repr(e).replace("\n", "\\n")
         logging.error(f"{type(e).__name__}: {error_message}")
+        try:
+            menu.save()
+            # print("Bank state saved before exiting due to an error.")
+        except (IOError, ValueError) as save_error:
+            # print(f"Failed to save bank state: {repr(save_error)}")
+            pass
         print("Sorry! Something unexpected happened. Check the logs or contact the developer for assistance.")
         sys.exit(1)

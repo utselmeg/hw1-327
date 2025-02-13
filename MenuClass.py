@@ -3,7 +3,7 @@ import sys
 import logging
 import datetime
 import pickle
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import NoReturn
 from BankClass import Bank
 from AccountClass import Account
@@ -58,59 +58,76 @@ f"Currently selected account: {account_info}\n"
                 self._quit()
 
     def _open_account(self) -> None:
-        try:
-            account_type = input("Type of account? (checking/savings)\n>").strip().capitalize()
-            self.bank.open_account(account_type)
-        except ValueError as e:
-            print("printing error")
-            print(e)
-            return
+        while True:
+            try:
+                account_type = input("Type of account? (checking/savings)\n>").strip().capitalize()
+                self.bank.open_account(account_type)
+                break
+            except ValueError as e:
+                print(e)
 
     def _summary(self) -> None:
         self.bank.summary()
 
+    @staticmethod
+    def _get_valid_input(prompt: str, input_validation, error_message: str, exceptions=(ValueError,)):
+        """Helper to repeatedly prompt for valid input."""
+        while True:
+            try:
+                return input_validation(input(prompt).strip())
+            except exceptions:
+                print(error_message)
+
     def _select_account(self) -> None:
-        try:
-            account_number = int(input("Enter account number\n>"))
-            self.bank.select_account(account_number)
-        except (ValueError, AttributeError) as e:
-            print(e)
-            return
+        while True:
+            account_number = BankMenu._get_valid_input(
+                "Enter account number\n>",
+                lambda x: int(x),
+                "Please enter a valid account number."
+            )
+            try:
+                self.bank.select_account(account_number)
+                break
+            except AttributeError as e:
+                print(e)
 
     def _add_transaction(self) -> None:
+        selected_account: Account = self.bank.get_selected_account()
+        if selected_account is None:
+            print("This command requires that you first select an account.")
+            return
+
         try:
-            while True:
-                try:
-                    amount = Decimal(input("Amount?\n>"))
-                    if Decimal(amount):
-                        amount = Decimal(amount)
-                        break
-                except ValueError:
-                    print("Please try again with a valid dollar amount.")
-            while True:
-                try:
-                    date_input = input("Date? (YYYY-MM-DD)\n>").strip()
-                    date = datetime.datetime.strptime(date_input, "%Y-%m-%d").date()
-                    break
-                except ValueError:
-                    print("Please try again with a valid date in the format YYYY-MM-DD.")
+            amount = BankMenu._get_valid_input(
+                "Amount?\n>",
+                lambda x: Decimal(x),
+                "Please try again with a valid dollar amount.",
+                (ValueError, InvalidOperation)
+            )
+
+            date = BankMenu._get_valid_input(
+                "Date? (YYYY-MM-DD)\n>",
+                lambda x: datetime.datetime.strptime(x, "%Y-%m-%d").date(),
+                "Please try again with a valid date in the format YYYY-MM-DD."
+            )
+
             self.bank.add_transaction(amount, date)
-        except (ValueError, TypeError, AttributeError, OverdrawError, TransactionSequenceError, TransactionLimitError) as e:
-            print("printing error")
+
+        except (OverdrawError, TransactionLimitError, TransactionSequenceError) as e:
             print(e)
             return
 
     def _list_transactions(self) -> None:
         try:
             self.bank.list_transactions()
-        except (ValueError, TypeError, AttributeError) as e:
+        except AttributeError as e:
             print(e)
             return
 
     def _apply_interest_and_fees(self) -> None:
         try:
             self.bank.interest_and_fees()
-        except (ValueError, TypeError, AttributeError) as e:
+        except (ValueError, TypeError, AttributeError, TransactionSequenceError) as e:
             print(e)
             return
 
@@ -118,6 +135,10 @@ f"Currently selected account: {account_info}\n"
         with open("bank.pickle", "wb") as file:
             pickle.dump(self.bank, file)  # type: ignore
             logger.debug("Saved to bank.pickle")
+
+    def save(self) -> None:
+        """Public method to save the bank state."""
+        self._save()
 
     def _load(self) -> None:
         if os.path.exists("bank.pickle"):

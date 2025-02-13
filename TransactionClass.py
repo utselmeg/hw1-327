@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 from decimal import Decimal
 from datetime import date, timedelta
@@ -21,7 +22,12 @@ class Transaction:
         self.transaction_type: TransactionType = transaction_type
 
     @classmethod
-    def last_day_of_month(cls, transaction_date: date) -> date:
+    def get_last_transaction(cls, transactions: list["Transaction"]) -> Transaction | None:
+        """Returns the most recent transaction, or None if there are no transactions."""
+        return max(transactions, key=lambda t: t.date, default=None)
+
+    @staticmethod
+    def last_day_of_month(transaction_date: date) -> date:
         """Returns the last day of the given month."""
         first_of_next_month = date(transaction_date.year + transaction_date.month // 12,
                                    transaction_date.month % 12 + 1, 1)
@@ -29,13 +35,11 @@ class Transaction:
 
     @staticmethod
     def validate_transaction(transactions: list["Transaction"], new_transaction: "Transaction") -> None:
-        """Ensures the new transaction follows sequence rules."""
+        """Check whether the new transaction follows sequence rules."""
         if not transactions:
             return
 
         last_transaction = max(transactions, key=lambda t: t.date)
-        last_transaction_date = Transaction.last_day_of_month(last_transaction.date)
 
-        if last_transaction_date > new_transaction.date and last_transaction.transaction_type not in {TransactionType.FEE,
-                                                                                                      TransactionType.INTEREST}:
-            raise TransactionSequenceError(last_transaction_date, error_type="sequence")
+        if last_transaction.date > new_transaction.date:
+            raise TransactionSequenceError(last_transaction.date, error_type="sequence")
