@@ -1,5 +1,7 @@
 import sys
 import logging
+import sqlalchemy
+from Models import Base
 from MenuClass import BankMenu
 
 logging.basicConfig(
@@ -14,17 +16,19 @@ def main(bank_menu: BankMenu):
     bank_menu.run()
 
 if __name__ == "__main__":
+    engine = sqlalchemy.create_engine("sqlite:///bank.db")
+    Base.metadata.create_all(engine)
     menu = BankMenu()
     try:
         main(menu)
     except Exception as e:
         error_message = repr(e).replace("\n", "\\n")
         logging.error(f"{type(e).__name__}: {error_message}")
-        # try:
-        #     menu.save()
-        #     # print("Bank state saved before exiting due to an error.")
-        # except (IOError, ValueError) as save_error:
-        #     # print(f"Failed to save bank state: {repr(save_error)}")
-        #     pass
+        try:
+            menu.session.commit()
+            menu.session.close()
+        except sqlalchemy.exc.SQLAlchemyError as save_error:
+            logging.error(f"Failed to save to database: {repr(save_error)}")
+            pass
         print("Sorry! Something unexpected happened. Check the logs or contact the developer for assistance.")
         sys.exit(0)

@@ -1,19 +1,53 @@
 import logging
+from sqlalchemy.orm import Session
 from decimal import Decimal, ROUND_HALF_UP
+from Models import Account as AccountModel
 from TransactionClass import TransactionType
-from AccountClass import Account, AccountType, SavingsAccount, CheckingAccount
 from CustomException import OverdrawError, TransactionSequenceError
+from AccountClass import Account, AccountType, SavingsAccount, CheckingAccount
+
 
 logger = logging.getLogger(__name__)
+
 
 class Bank:
     """Represents a banking system that manages multiple accounts."""
 
-    def __init__(self):
+    def __init__(self, session: Session = None):
         """Initializes the bank with an empty dictionary of accounts."""
         self._accounts = {}  # dictionary to store accounts by account number
         self._selected: Account | None = None
         self._num_accounts: int = 0
+        self._session = session
+
+        if session:
+            self._load_from_db()
+
+    def get_accounts(self):
+        """Returns a dictionary of accounts."""
+        return self._accounts
+
+    def _load_from_db(self):
+        """Load accounts from the database."""
+        if not self._session:
+            return
+
+        account_models = self._session.query(AccountModel).all()
+
+        for model in account_models:
+            if model.account_type == "checking":
+                account = CheckingAccount(model.account_number, model)
+            elif model.account_type == "savings":
+                account = SavingsAccount(model.account_number, model)
+            else:
+                continue
+
+            self._accounts[model.account_number] = account
+
+        if account_models:
+            self._num_accounts = max(model.account_number for model in account_models)
+
+        logger.debug(f"Loaded from bank.db")
 
     def open_account(self, account_type: str) -> None:
         """Opens a new account of the specified type."""
@@ -22,13 +56,17 @@ class Bank:
         except ValueError as e:
             raise e
 
-        if acc_type_enum == AccountType.CHECKING:
-            new_account = CheckingAccount(self._num_accounts + 1)
-        else:
-            new_account = SavingsAccount(self._num_accounts + 1)
-
         self._num_accounts += 1
+
+        if acc_type_enum == AccountType.CHECKING:
+            new_account = CheckingAccount(self._num_accounts)
+        else:
+            new_account = SavingsAccount(self._num_accounts)
         self._accounts[self._num_accounts] = new_account
+
+        if self._session:
+            self._session.add(new_account.model)
+
         logger.debug(f"Created account: {self._num_accounts}")
 
     @classmethod
@@ -90,3 +128,9 @@ class Bank:
             logger.debug("Triggered interest and fees")
         except TransactionSequenceError as e:
             raise e
+
+    def commit(self):
+        """Commit changes to the database."""
+        if self._session:
+            self._session.commit()
+            logger.debug("Saved to bank.db")

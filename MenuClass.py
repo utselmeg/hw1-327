@@ -1,24 +1,28 @@
-import os
 import sys
 import logging
 import datetime
-import pickle
 from decimal import Decimal, InvalidOperation
 from typing import NoReturn
 from BankClass import Bank
 from AccountClass import Account
 from CustomException import OverdrawError, TransactionSequenceError, TransactionLimitError
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
+from Models import Base
+
 
 logger = logging.getLogger(__name__)
+
 
 class BankMenu:
     """Display the bank menu."""
 
     def __init__(self) -> None:
-        """Initializes the bank.
-        If there is a local save file named bank.pickle, it loads it.
-        Otherwise, it creates a new bank."""
-        self._load()
+        """Initializes the bank and database connection."""
+        self.engine = create_engine("sqlite:///bank.db")
+        Base.metadata.create_all(self.engine)
+        self.session = Session(self.engine)
+        self.bank = Bank(self.session)
 
     def _display_menu(self) -> None:
         selected_account: Account = self.bank.get_selected_account()
@@ -62,6 +66,7 @@ f"Currently selected account: {account_info}\n"
             try:
                 account_type = input("Type of account? (checking/savings)\n>").strip().capitalize()
                 self.bank.open_account(account_type)
+                self.bank.commit()
                 break
             except ValueError as e:
                 print(e)
@@ -112,6 +117,7 @@ f"Currently selected account: {account_info}\n"
             )
 
             self.bank.add_transaction(amount, date)
+            self.bank.commit()
 
         except (OverdrawError, TransactionLimitError, TransactionSequenceError) as e:
             print(e)
@@ -127,28 +133,12 @@ f"Currently selected account: {account_info}\n"
     def _apply_interest_and_fees(self) -> None:
         try:
             self.bank.interest_and_fees()
+            self.bank.commit()
         except (ValueError, TypeError, AttributeError, TransactionSequenceError) as e:
             print(e)
             return
 
-    def _save(self) -> None:
-        with open("bank.pickle", "wb") as file:
-            pickle.dump(self.bank, file)  # type: ignore
-            logger.debug("Saved to bank.pickle")
-
-    def save(self) -> None:
-        """Public method to save the bank state."""
-        self._save()
-
-    def _load(self) -> None:
-        if os.path.exists("bank.pickle"):
-            with open("bank.pickle", "rb") as file:
-                self.bank = pickle.load(file)
-                self.bank.select_account(None)
-                logger.debug("Loaded from bank.pickle")
-        else:
-            self.bank = Bank()
-
     def _quit(self) -> NoReturn:
-        self._save()
+        self.session.commit()
+        self.session.close()
         sys.exit(0)
