@@ -4,15 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="77c0c4a7-d59e-4bba-b27b-842052d0b7bb" name="Changes" comment="exceptions and logging 2nd impl">
-      <change afterPath="$PROJECT_DIR$/Models.py" afterDir="false" />
+    <list default="true" id="77c0c4a7-d59e-4bba-b27b-842052d0b7bb" name="Changes" comment="add sqlalchemy db">
       <change afterPath="$PROJECT_DIR$/gui.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/profiles_settings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/AccountClass.py" beforeDir="false" afterPath="$PROJECT_DIR$/AccountClass.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BankClass.py" beforeDir="false" afterPath="$PROJECT_DIR$/BankClass.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/MenuClass.py" beforeDir="false" afterPath="$PROJECT_DIR$/MenuClass.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cli.py" beforeDir="false" afterPath="$PROJECT_DIR$/cli.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -108,7 +101,7 @@
       <workItem from="1739251407193" duration="26980000" />
       <workItem from="1740545197561" duration="6953000" />
       <workItem from="1740619725186" duration="495000" />
-      <workItem from="1740620230665" duration="12169000" />
+      <workItem from="1740620230665" duration="12551000" />
     </task>
     <task id="LOCAL-00001" summary="prelim implementation">
       <option name="closed" value="true" />
@@ -142,7 +135,15 @@
       <option name="project" value="LOCAL" />
       <updated>1739432506672</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="add sqlalchemy db">
+      <option name="closed" value="true" />
+      <created>1740782560857</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1740782560857</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -191,7 +192,8 @@
     <MESSAGE value="final impl" />
     <MESSAGE value="exceptions and logging 1st impl" />
     <MESSAGE value="exceptions and logging 2nd impl" />
-    <option name="LAST_COMMIT_MESSAGE" value="exceptions and logging 2nd impl" />
+    <MESSAGE value="add sqlalchemy db" />
+    <option name="LAST_COMMIT_MESSAGE" value="add sqlalchemy db" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/hw1$main.coverage" NAME="main Coverage Results" MODIFIED="1737947016390" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
